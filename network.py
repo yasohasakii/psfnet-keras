@@ -1,7 +1,6 @@
 from __future__ import print_function, division
 import scipy
 
-from keras.datasets import mnist
 from keras_contrib.layers.normalization.instancenormalization import InstanceNormalization
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout, Concatenate
 from keras.layers import BatchNormalization, Activation, ZeroPadding2D
@@ -19,13 +18,13 @@ import os
 class model():
     def __init__(self):
         # Input shape
-        self.img_rows = 256
-        self.img_cols = 256
+        self.img_rows = 200
+        self.img_cols = 200
         self.channels = 1
         self.img_shape = (self.img_rows, self.img_cols, self.channels)
 
         # Configure data loader
-        self.dataset_name = 'deblur'
+        self.dataset_name = 'train'
         self.data_loader = DataLoader(dataset_name=self.dataset_name,
                                       img_res=(self.img_rows, self.img_cols))
 
@@ -56,9 +55,9 @@ class model():
         img_B = Input(shape=self.img_shape)
 
         # Translate images to the other domain
-        deblur = self.g(img_A)
+        deblur = self.g(img_B)
 
-        img_id = self.g(img_B)
+        img_id = self.g(img_A)
 
         # Combined model trains generators to fool discriminators
         self.combined = Model(inputs=[img_A, img_B],
@@ -112,12 +111,13 @@ class model():
 
         # Adversarial loss ground truths
         valid = np.ones((batch_size,) + self.disc_patch)
-        fake = np.zeros((batch_size,) + self.disc_patch)
+        deblur = np.zeros((batch_size,) + self.disc_patch)
 
         for epoch in range(epochs):
             for batch_i, (imgs_A, imgs_B) in enumerate(self.data_loader.load_batch(batch_size)):
 
-                deblur = self.g.predict(image_A)
+                deblurs = self.g.predict(imgs_B)
+                imgs_id = self.g.predict(imgs_A)
 
                 # ------------------
                 #  Train Generators
@@ -125,7 +125,7 @@ class model():
 
                 # Train the generators
                 g_loss = self.combined.train_on_batch([imgs_A, imgs_B],
-                                                        [imgs_A, imgs_B])
+                                                        [imgs_id, deblurs])
 
                 elapsed_time = datetime.datetime.now() - start_time
 
@@ -148,9 +148,9 @@ class model():
         imgs_A = self.data_loader.load_data(domain="A", batch_size=1, is_testing=True)
         imgs_B = self.data_loader.load_data(domain="B", batch_size=1, is_testing=True)
 
-        deblur = self.g.predict(imgs_A)
+        deblur = self.g.predict(imgs_B)
 
-        gen_imgs = np.concatenate([imgs_A, deblur, imgs_B])
+        gen_imgs = np.concatenate([imgs_B, deblur, imgs_A])
 
         # Rescale images 0 - 1
         gen_imgs = 0.5 * gen_imgs + 0.5
