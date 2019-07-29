@@ -1,7 +1,7 @@
 import scipy
 from glob import glob
 import numpy as np
-
+from astropy.io import fits
 
 class DataLoader():
     def __init__(self, dataset_name, img_res=(128, 128)):
@@ -26,7 +26,7 @@ class DataLoader():
                 img = scipy.misc.imresize(img, self.img_res)
             imgs.append(img)
 
-        imgs = np.array(imgs) / 127.5 - 1.
+        imgs = np.array(imgs)
 
         return imgs
 
@@ -61,16 +61,17 @@ class DataLoader():
                 imgs_A.append(img_A)
                 imgs_B.append(img_B)
 
-            imgs_A = np.array(imgs_A) / 127.5 - 1.
-            imgs_B = np.array(imgs_B) / 127.5 - 1.
+            imgs_A = np.array(imgs_A) 
+            imgs_B = np.array(imgs_B)
 
             yield imgs_A, imgs_B
 
     def load_img(self, path):
         img = self.imread(path)
         img = scipy.misc.imresize(img, self.img_res)
-        img = img / 127.5 - 1.
+        img = (img /np.max(image) - 0.5)*2
         return img[np.newaxis, :, :, :]
 
     def imread(self, path):
-        return scipy.misc.imread(path, mode='RGB').astype(np.float)
+        image = fits.read(path)[0].data
+        return image.astype(np.float)
