@@ -94,7 +94,7 @@ class model():
         d2 = conv2d(d1, self.gf*2)
         d3 = conv2d(d2, self.gf*4)
         # d4 = conv2d(d3, self.gf*8)
-
+        print(d0,d1,d2,d3)
         # Upsampling
         # u1 = deconv2d(d4, d3, self.gf*4)
         # u2 = deconv2d(u1, d2, self.gf*2)
