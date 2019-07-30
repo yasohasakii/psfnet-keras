@@ -79,7 +79,9 @@ class model():
         def deconv2d(layer_input, skip_input, filters, f_size=4, dropout_rate=0):
             """Layers used during upsampling"""
             u = UpSampling2D(size=2)(layer_input)
-            u = Conv2D(filters, kernel_size=f_size, strides=0, padding='same', activation='relu')(u)
+            print(u)
+            u = Conv2D(filters, kernel_size=f_size, strides=1, padding='same', activation='relu')(u)
+            print(u)
             if dropout_rate:
                 u = Dropout(dropout_rate)(u)
             u = InstanceNormalization()(u)
@@ -94,6 +96,7 @@ class model():
         d2 = conv2d(d1, self.gf*2)
         d3 = conv2d(d2, self.gf*4)
         d4 = conv2d(d3, self.gf*8)
+        print("d4",d4,'d3',d3)
 
         # Upsampling
         u1 = deconv2d(d4, d3, self.gf*4)
